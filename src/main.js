@@ -1,11 +1,20 @@
 import "./styles.css";
+import { loadState, saveState, ensureVisitScheduled } from "./visit/storage.js";
+import { isOverdue, visitStats } from "./visit/rules.js";
+import { bindVisitEvents, renderVisitSection } from "./visit/ui.js";
 
-const STORAGE_KEY = "zfl-14-repairs";
 const statuses = {
   all: "全部",
   todo: "待处理",
   doing: "处理中",
-  done: "已完成"
+  done: "已完成",
+  closed: "已结案"
+};
+
+// “逾期未回访”是列表中的独立筛选，不是事项状态。
+const filters = {
+  ...statuses,
+  overdue: "逾期未回访"
 };
 
 const priorities = {
@@ -17,35 +26,12 @@ const priorities = {
 let state = loadState();
 const app = document.querySelector("#app");
 
-function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) return JSON.parse(saved);
-  return {
-    filter: "all",
-    repairs: [
-      {
-        id: crypto.randomUUID(),
-        location: "厨房",
-        title: "水槽下方渗水",
-        priority: "high",
-        cost: 260,
-        status: "todo",
-        photo: "",
-        note: "先检查软管接口"
-      }
-    ]
-  };
-}
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
 function render() {
   const repairs = filteredRepairs();
-  const unfinished = state.repairs.filter((repair) => repair.status !== "done");
+  const unfinished = state.repairs.filter((repair) => repair.status === "todo" || repair.status === "doing");
   const totalCost = unfinished.reduce((total, repair) => total + Number(repair.cost || 0), 0);
   const doing = state.repairs.filter((repair) => repair.status === "doing").length;
+  const stats = visitStats(state.repairs);
 
   app.innerHTML = `
     <main class="shell">
@@ -58,6 +44,7 @@ function render() {
           <div class="stat"><span>未完成</span><strong>${unfinished.length}</strong></div>
           <div class="stat"><span>处理中</span><strong>${doing}</strong></div>
           <div class="stat"><span>预计费用</span><strong>¥${totalCost}</strong></div>
+          <div class="stat ${stats.overdue > 0 ? "danger" : ""}"><span>逾期未回访</span><strong>${stats.overdue}</strong></div>
         </section>
       </header>
 
@@ -73,15 +60,20 @@ function render() {
             <label>照片链接<input name="photo" type="url" placeholder="可选，粘贴图片地址"></label>
             <label>备注<textarea name="note" placeholder="师傅电话、材料或注意事项"></textarea></label>
             <button class="primary" type="submit">保存事项</button>
+            <p class="form-hint">选择“已完成”保存后，将自动安排 7 天后回访。</p>
           </form>
         </aside>
 
         <section>
           <div class="toolbar">
-            ${Object.entries(statuses).map(([value, label]) => `<button class="seg ${state.filter === value ? "active" : ""}" data-filter="${value}">${label}</button>`).join("")}
+            ${Object.entries(filters).map(([value, label]) =>
+              value === "overdue"
+                ? `<button class="seg ${state.filter === value ? "active" : ""}" data-filter="${value}">${label} ${stats.overdue > 0 ? `<b>${stats.overdue}</b>` : ""}</button>`
+                : `<button class="seg ${state.filter === value ? "active" : ""}" data-filter="${value}">${label}</button>`
+            ).join("")}
           </div>
           <div class="repairs">
-            ${repairs.length ? repairs.map(renderRepair).join("") : `<div class="empty">当前状态下没有维修事项</div>`}
+            ${repairs.length ? repairs.map(renderRepair).join("") : `<div class="empty">当前筛选下没有维修事项</div>`}
           </div>
         </section>
       </section>
@@ -93,19 +85,21 @@ function render() {
 
 function renderRepair(repair) {
   return `
-    <article class="repair">
+    <article class="repair${isOverdue(repair) ? " is-overdue" : ""}">
       <div class="photo">${repair.photo ? `<img src="${escapeHtml(repair.photo)}" alt="${escapeHtml(repair.location)}维修照片">` : "未添加照片"}</div>
       <div class="content">
         <div class="row">
           <h3>${escapeHtml(repair.location)}</h3>
           <span class="priority ${repair.priority}">${priorities[repair.priority]}</span>
-          <span class="status ${repair.status}">${statuses[repair.status]}</span>
+          <span class="status ${repair.status}">${statuses[repair.status] || repair.status}</span>
+          ${isOverdue(repair) ? `<span class="status overdue">逾期未回访</span>` : ""}
         </div>
         <p>${escapeHtml(repair.title)}</p>
         <div class="row">
           <span class="chip">预计 ¥${Number(repair.cost || 0)}</span>
           <span class="chip">${escapeHtml(repair.note || "暂无备注")}</span>
         </div>
+        ${renderVisitSection(repair)}
         <div class="actions">
           <select data-status="${repair.id}">${renderStatusOptions(repair.status)}</select>
           <button class="ghost" data-delete="${repair.id}">删除</button>
@@ -115,10 +109,14 @@ function renderRepair(repair) {
   `;
 }
 
+// 已结案只能由“回访满意”产生，列表中保留展示但不允许手动切回。
 function renderStatusOptions(selected) {
   return Object.entries(statuses)
     .filter(([value]) => value !== "all")
-    .map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`)
+    .map(([value, label]) => {
+      const disabled = value === "closed" && selected !== "closed" ? "disabled" : "";
+      return `<option value="${value}" ${selected === value ? "selected" : ""} ${disabled}>${label}</option>`;
+    })
     .join("");
 }
 
@@ -132,7 +130,7 @@ function bindEvents() {
   document.querySelector("#repair-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.target));
-    state.repairs.unshift({
+    const repair = {
       id: crypto.randomUUID(),
       location: data.location.trim(),
       title: data.title.trim(),
@@ -140,16 +138,24 @@ function bindEvents() {
       cost: Number(data.cost || 0),
       status: data.status,
       photo: data.photo.trim(),
-      note: data.note.trim()
-    });
-    saveState();
+      note: data.note.trim(),
+      visit: null,
+      history: []
+    };
+    state.repairs.unshift(repair);
+    // 新建即完工：立即排七天后回访（ensureVisitScheduled 内部会保存）。
+    if (repair.status === "done") {
+      ensureVisitScheduled(state, repair.id);
+    } else {
+      saveState(state);
+    }
     render();
   });
 
   document.querySelectorAll("[data-filter]").forEach((button) => {
     button.addEventListener("click", () => {
       state.filter = button.dataset.filter;
-      saveState();
+      saveState(state);
       render();
     });
   });
@@ -158,7 +164,12 @@ function bindEvents() {
     select.addEventListener("change", () => {
       const repair = state.repairs.find((item) => item.id === select.dataset.status);
       repair.status = select.value;
-      saveState();
+      // 切到已完成即排回访；已有待回访排期时不会重复安排。
+      if (select.value === "done") {
+        ensureVisitScheduled(state, repair.id);
+      } else {
+        saveState(state);
+      }
       render();
     });
   });
@@ -166,7 +177,7 @@ function bindEvents() {
   document.querySelectorAll("[data-delete]").forEach((button) => {
     button.addEventListener("click", () => {
       state.repairs = state.repairs.filter((repair) => repair.id !== button.dataset.delete);
-      saveState();
+      saveState(state);
       render();
     });
   });
@@ -174,11 +185,14 @@ function bindEvents() {
 
 function filteredRepairs() {
   if (state.filter === "all") return state.repairs;
+  if (state.filter === "overdue") return state.repairs.filter((repair) => isOverdue(repair));
+  if (state.filter === "done") return state.repairs.filter((repair) => repair.status === "done" || repair.status === "closed");
   return state.repairs.filter((repair) => repair.status === state.filter);
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 }
 
+bindVisitEvents({ state, rerender: render });
 render();

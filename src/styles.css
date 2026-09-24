@@ -56,7 +56,7 @@ h1 {
 .stats {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
 .stat,
@@ -273,6 +273,221 @@ textarea {
   min-height: 200px;
   justify-content: center;
   text-align: center;
+}
+
+/* 回访区块 */
+.stat.danger strong {
+  color: #b23c2e;
+}
+
+.status.overdue {
+  background: #f6c8bd;
+  color: #92301f;
+}
+
+.repair.is-overdue {
+  border-color: #d98a72;
+  box-shadow: 0 0 0 1px #d98a72 inset;
+}
+
+.seg b {
+  background: #b23c2e;
+  border-radius: 999px;
+  color: white;
+  display: inline-block;
+  font-size: 0.72rem;
+  margin-left: 4px;
+  min-width: 18px;
+  padding: 1px 5px;
+}
+
+.seg.active b {
+  background: white;
+  color: #b23c2e;
+}
+
+.visit-card {
+  background: #f2f6ef;
+  border: 1px solid #d3ddcd;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.visit-card.overdue {
+  background: #fdeee9;
+  border-color: #e0a08b;
+}
+
+.visit-head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.visit-tag {
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 4px 9px;
+  background: #d8ead6;
+  color: #376336;
+}
+
+.visit-card.overdue .visit-tag {
+  background: #f6c8bd;
+  color: #92301f;
+}
+
+.postpone-info,
+.visit-error {
+  color: #8a5a3f;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.visit-error:empty {
+  display: none;
+}
+
+.visit-error {
+  color: #b23c2e;
+}
+
+.visit-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background: #e3e7df;
+  border-radius: 6px;
+  color: #4d584b;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.btn-secondary:disabled {
+  color: #9aa296;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.primary.small {
+  min-height: 0;
+  padding: 8px 12px;
+}
+
+.visit-form {
+  border-top: 1px dashed #c6cfc1;
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.visit-form textarea {
+  min-height: 56px;
+}
+
+.visit-label {
+  color: #5c655b;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.inline {
+  align-items: center;
+  display: flex;
+  font-size: 0.88rem;
+  gap: 6px;
+  grid-template-columns: none;
+}
+
+.inline input {
+  min-height: 0;
+  width: auto;
+}
+
+.rework-box select {
+  min-height: 38px;
+}
+
+.visit-done {
+  background: #eef1eb;
+  border-radius: 6px;
+  color: #566053;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 8px 10px;
+}
+
+.history {
+  display: grid;
+  gap: 8px;
+}
+
+.history h4 {
+  font-size: 0.86rem;
+  margin: 0;
+}
+
+.history-item {
+  background: #faf8f5;
+  border: 1px solid #e6e1d7;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 84px 1fr;
+  overflow: hidden;
+  padding: 8px;
+}
+
+.history-photo {
+  align-items: center;
+  background: #ece8df;
+  border-radius: 6px;
+  color: #8c8575;
+  display: flex;
+  font-size: 0.74rem;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 64px;
+  overflow: hidden;
+}
+
+.history-photo img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.history-item p {
+  font-size: 0.82rem;
+  margin: 4px 0 0;
+}
+
+.chip.danger {
+  background: #f6c8bd;
+  color: #92301f;
+}
+
+.muted {
+  color: #8a9187;
+}
+
+.form-hint {
+  color: #8a9187;
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.status.closed {
+  background: #dfe6f0;
+  color: #384c68;
 }
 
 @media (max-width: 900px) {
