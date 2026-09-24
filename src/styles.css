@@ -56,7 +56,7 @@ h1 {
 .stats {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
 }
 
 .stat,
@@ -80,6 +80,16 @@ h1 {
 .stat strong {
   display: block;
   font-size: 1.65rem;
+}
+
+.stat.alarm {
+  background: #fbeae4;
+  border-color: #e0a58e;
+}
+
+.stat.alarm span,
+.stat.alarm strong {
+  color: #8d3a22;
 }
 
 .layout {
@@ -260,6 +270,189 @@ textarea {
   color: #376336;
 }
 
+.status.closed {
+  background: #e3e3ea;
+  color: #4a4a63;
+}
+
+/* 逾期未回访单列区块 */
+.overdue-panel {
+  background: #fff7f3;
+  border: 1px solid #e0a58e;
+  border-radius: 8px;
+  margin: 0 auto 20px;
+  max-width: 1240px;
+  padding: 16px 18px;
+}
+
+.overdue-panel h2 {
+  color: #8d3a22;
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+
+.overdue-hint {
+  color: #9a6a58;
+  font-size: 0.84rem;
+  margin: 0 0 12px;
+}
+
+.overdue-list {
+  display: grid;
+  gap: 10px;
+}
+
+.overdue-item {
+  align-items: center;
+  background: white;
+  border: 1px solid #ecd2c6;
+  border-radius: 6px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(200px, 1fr) 2fr;
+  padding: 10px 14px;
+}
+
+.overdue-info {
+  display: grid;
+  gap: 6px;
+}
+
+/* 回访区块 */
+.followup {
+  border-radius: 6px;
+  border: 1px dashed #c7cdc2;
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.followup.pending {
+  background: #f6f8f3;
+}
+
+.followup.pending.overdue {
+  background: #fdf1ec;
+  border-color: #e0a58e;
+}
+
+.followup.done {
+  background: #f2f7f0;
+}
+
+.followup.rework {
+  background: #fbf0ee;
+  border-color: #dfb3a7;
+}
+
+.followup-badge {
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 4px 10px;
+}
+
+.followup-badge.wait {
+  background: #e6eadf;
+  color: #566149;
+}
+
+.followup-badge.ok {
+  background: #d1e5cd;
+  color: #2f5c2c;
+}
+
+.followup-badge.bad {
+  background: #f2c5b2;
+  color: #813d2a;
+}
+
+.chip.warn {
+  background: #f6dfc9;
+  color: #83501f;
+}
+
+.followup-form {
+  display: grid;
+  gap: 8px;
+}
+
+.visit-option {
+  align-items: center;
+  color: #454e43;
+  display: flex;
+  font-size: 0.9rem;
+  gap: 8px;
+  grid-template-columns: none;
+}
+
+.visit-option input {
+  min-height: auto;
+  width: auto;
+}
+
+.rework-reason {
+  margin-left: 22px;
+  max-width: 360px;
+}
+
+.small {
+  font-size: 0.85rem;
+  min-height: auto;
+  padding: 6px 12px;
+}
+
+/* 返工历史：原费用和照片留档 */
+.history {
+  border-top: 1px dashed #d7dcd2;
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.history-title {
+  color: #6a7268;
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.history-item {
+  align-items: center;
+  background: #fafbf8;
+  border: 1px solid #e3e7de;
+  border-radius: 6px;
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+}
+
+.history-item img {
+  border-radius: 4px;
+  height: 56px;
+  object-fit: cover;
+  width: 72px;
+}
+
+.history-photo {
+  align-items: center;
+  background: #e4e8df;
+  border-radius: 4px;
+  color: #6a7268;
+  display: flex;
+  font-size: 0.76rem;
+  font-weight: 800;
+  height: 56px;
+  justify-content: center;
+  width: 72px;
+}
+
+.history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -279,6 +472,14 @@ textarea {
   .header,
   .layout {
     display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overdue-item {
     grid-template-columns: 1fr;
   }
 }
